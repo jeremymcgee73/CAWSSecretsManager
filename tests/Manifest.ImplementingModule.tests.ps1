@@ -16,9 +16,8 @@ Describe 'SecretsManagementExtension manifest' {
         }
 
         It 'has a  name set to SecretsManagementExtension in the manifest' {
-            $script:manifest.Name | Should Be 'ImplementiSecretsManagementExtensiongModule'
+            $script:manifest.Name | Should Be 'SecretsManagementExtension'
         }
-
 
         It 'has a valid version in the manifest' {
             $script:manifest.Version -as [Version] | Should Not BeNullOrEmpty
