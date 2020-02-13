@@ -1,0 +1,1 @@
+https://github.com/PowerShell/Modules/blob/166e4ca2f436d8fce8c071a5b257ee9cb700dab4/Modules/Microsoft.PowerShell.SecretsManagement/test/Microsoft.PowerShell.SecretsManagement.Tests.ps1
