@@ -1,35 +1,15 @@
-if ($PSEdition -eq 'Desktop') {
-    if (Get-Module -Name 'AWSPowerShell' -ListAvailable)
-    {
-        Import-Module -Name 'AWSPowerShell' -ErrorAction 'Stop'
-    }
-    elseif (Get-Module -Name 'AWSPowerShell.NetCore' -ListAvailable)
-    {
-        Import-Module -Name 'AWSPowerShell.NetCore' -ErrorAction 'Stop'
-    }
-    elseif (Get-Module -Name @('AWS.Tools.Common','AWS.Tools.SecretsManager') -ListAvailable)
-    {
-        Import-Module -Name @('AWS.Tools.Common','AWS.Tools.SecretsManager') -ErrorAction 'Stop'
-    }
-    else
-    {
-        throw 'One of the AWS Tools for PowerShell modules must be available for import.'
-    }
+$ErrorActionPreference = 'Stop'
+
+if (Get-Module -Name @('AWS.Tools.Common', 'AWS.Tools.SecretsManager') -ListAvailable) {
+    Import-Module -Name @('AWS.Tools.Common', 'AWS.Tools.SecretsManager')
+} elseif (($PSEdition -eq 'Desktop') -and (Get-Module -Name 'AWSPowerShell' -ListAvailable)) {
+    Import-Module -Name 'AWSPowerShell'
+} elseif (Get-Module -Name 'AWSPowerShell.NetCore' -ListAvailable) {
+    Import-Module -Name 'AWSPowerShell.NetCore'
+} else {
+    throw 'One of the AWS Tools for PowerShell modules must be available for import.'
 }
-else {
-    if (Get-Module -Name 'AWSPowerShell.NetCore' -ListAvailable)
-    {
-        Import-Module -Name 'AWSPowerShell.NetCore' -ErrorAction 'Stop'
-    }
-    elseif (Get-Module -Name @('AWS.Tools.Common','AWS.Tools.SecretsManager') -ListAvailable)
-    {
-        Import-Module -Name @('AWS.Tools.Common','AWS.Tools.SecretsManager') -ErrorAction 'Stop'
-    }
-    else
-    {
-        throw 'One of the AWS Tools for PowerShell modules must be available for import.'
-    }
-}
+
 function Get-AWSSecret
 {
     param (
