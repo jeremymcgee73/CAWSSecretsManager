@@ -30,16 +30,16 @@ else {
         throw 'One of the AWS Tools for PowerShell modules must be available for import.'
     }
 }
+
+$script:RESOURCE_NOT_FOUND_EXCEPTION = 'ResourceNotFoundException'
+
 function Get-AWSSecret
 {
     param (
         [string] $Name
     )
 
-    if(Test-AWSSecret -Name $Name)
-    {
-        Get-SECSecretValue -SecretId $Name -ErrorAction Stop
-    }
+    Get-SECSecretValue -SecretId $Name
 }
 
 function Test-AWSSecret
@@ -48,11 +48,16 @@ function Test-AWSSecret
         [string] $Name
     )
 
-    if(@(Get-SECSecretList -ErrorAction Stop| Where-Object{$_.Name -eq $Name}).Count -eq 1){
-        $true
-    }else{
-        $false
+    try {
+        $null = Get-SECSecret -SecretId $Name
+        return $true
+    } catch {
+        if ($_.Exception.InnerException.ErrorCode -eq $script:RESOURCE_NOT_FOUND_EXCEPTION) {
+            return $false
+        }
+        throw
     }
+    return $false
 }
 
 function Get-Secret
@@ -67,7 +72,7 @@ function Get-Secret
         throw "The Name parameter cannot contain wild card characters."
     }
 
-    $awsSecret = $(Get-AWSSecret -Name $Name)
+    $awsSecret = Get-AWSSecret -Name $Name
 
     if($awsSecret){
         if($awsSecret.SecretBinary){
@@ -116,7 +121,7 @@ function Set-Secret
     )
 
 
-    if(Get-AWSSecret -Name $Name){
+    if (Test-AWSSecret -Name $Name) {
         Write-Error "Secret name, $Name, is already used in this vault."
         return $false
     }
@@ -187,16 +192,14 @@ function Remove-Secret
         throw "The Name parameter cannot contain wild card characters."
     }
 
-    if(!(Get-AWSSecret -Name $Name)){
-        Write-Error "Secret name, $Name, does not exist."
-        return $false
-    }
-
     try{
         Remove-SECSecret -SecretId $Name -ErrorAction Stop -Confirm:$false | Out-Null
-    }Catch{
-        throw $_
-        return $false
+    } catch {
+        if ($_.Exception.InnerException.ErrorCode -eq $script:RESOURCE_NOT_FOUND_EXCEPTION) {
+            # If the secret does not exist, the result should still be $true.
+            return $true
+        }
+        throw
     }
 
     return $true
@@ -218,16 +221,15 @@ function Get-SecretInfo
             Name = $name
         }
 
-        $awsSecret = $(Get-AWSSecret -Name $Name)
+        $awsSecret = Get-AWSSecret -Name $Name
 
         if($awsSecret.SecretBinary){
             $returnObject | Add-Member -NotePropertyName Value -NotePropertyValue 'ByteArray'
         }else{
-            $type = ((Get-AWSSecret -Name $Name).SecretString | ConvertFrom-Json).PsType
+            $type = (ConvertFrom-Json -InputObject $awsSecret.SecretString).PsType
             $returnObject | Add-Member -NotePropertyName Value -NotePropertyValue $type
         }
 
         $ReturnObject
     }
-
 }
